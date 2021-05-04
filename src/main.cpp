@@ -23,6 +23,7 @@ int main(int argc, char *argv[]) {
     Mat obj_descriptor;
     siftPtr->detectAndCompute(obj_image, noArray(), obj_keypoints, obj_descriptor);
 
+
     VideoCapture cap(path+"/video.mov");
     if(!cap.isOpened()){
         cout << "Error opening video stream or file" << endl;
@@ -49,23 +50,6 @@ int main(int argc, char *argv[]) {
             vector<DMatch> matches;
             matcher.match(frame_descriptor, obj_descriptor, matches);
 
-            //extract keypoint of matches
-            vector<KeyPoint> kp_match;
-            for (DMatch match : matches)
-                kp_match.push_back(frame_keypoints.at(match.queryIdx));
-
-            //-- Filter matches using the Lowe's ratio test
-            /*
-            const float ratio_thresh = 0.75f;
-            std::vector<DMatch> good_matches;
-            for (size_t i = 0; i < matches.size(); i++)
-            {
-                if (matches[i][0].distance < ratio_thresh * matches[i][1].distance)
-                {
-                    good_matches.push_back(knn_matches[i][0]);
-                }
-            }*/
-
             //RSAC
             vector<Point2f> obj_points;
             vector<Point2f> frame_points;
@@ -75,6 +59,8 @@ int main(int argc, char *argv[]) {
                 obj_points.push_back(obj_keypoints[ matches[i].trainIdx ].pt );
                 frame_points.push_back( frame_keypoints[ matches[i].queryIdx ].pt );
             }
+
+            //get homography
             Mat H = findHomography( obj_points, frame_points, RANSAC);
 
             //-- re-project the corners of the train object into the frame with the found homography
@@ -93,12 +79,16 @@ int main(int argc, char *argv[]) {
             line( frame, scene_corners[2],scene_corners[3], Scalar( 0, 255, 0), 4 );
             line( frame, scene_corners[3],scene_corners[0], Scalar( 0, 255, 0), 4 );
 
+            //extract keypoint of matches
+            vector<KeyPoint> kp_match;
+            for (DMatch match : matches)
+                kp_match.push_back(frame_keypoints.at(match.queryIdx));
+
             //draw matches on frame
-            //drawKeypoints(frame, kp_match, frame, Scalar(255,0,0));
-            imshow( "Frame", frame );
+            drawKeypoints(frame, kp_match, frame, Scalar(255,0,0));
         }
 
-        //imshow( "Frame", frame );
+        imshow( "Frame", frame );
         cnt++;
 
         char c=(char)waitKey(25);
