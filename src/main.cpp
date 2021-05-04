@@ -19,7 +19,7 @@ int main(int argc, char *argv[]) {
 
     vector<KeyPoint> keypoints;
     Mat obj_descriptor;
-    siftPtr->detect(obj1, keypoints, obj_descriptor);
+    siftPtr->detectAndCompute(obj1, noArray(), keypoints, obj_descriptor);
 
     // Add results to image.
     Mat output;
@@ -31,6 +31,8 @@ int main(int argc, char *argv[]) {
         cout << "Error opening video stream or file" << endl;
         return -1;
     }
+
+    namedWindow("Frame", WINDOW_NORMAL);
 
     int cnt=0;
     while(true){
@@ -44,22 +46,30 @@ int main(int argc, char *argv[]) {
 
             vector<KeyPoint> frame_keypoints;
             Mat frame_descriptor;
-            siftPtr->detect(frame, frame_keypoints, frame_descriptor);
 
+            //compute keypoints for frame
+            siftPtr->detectAndCompute(frame, noArray(), frame_keypoints, frame_descriptor);
+
+            //matches the keypoints
             vector<DMatch> matches;
             matcher.match(frame_descriptor, obj_descriptor, matches);
-            cout << "match=";
-//the number of matched features between the two images
-            cout << matches.size() << endl;
-            drawMatches(frame, frame_keypoints, obj1, keypoints, matches, imageMatches);
+
+            //extract keypoint of matches
+            vector<KeyPoint> kp_match;
+            for (DMatch match : matches)
+                kp_match.push_back(frame_keypoints.at(match.queryIdx));
+
+            //draw matches on frame
+            drawKeypoints(frame, kp_match, frame, Scalar(255,0,0));
         }
-        namedWindow("matches");
-        imshow("matches",imageMatches);
-        //imshow( "Frame", frame );
+
+        imshow( "Frame", frame );
         cnt++;
+
         char c=(char)waitKey(25);
         if(c==27)
             break;
+        //TODO remove stub break
         break;
     }
     waitKey(0);
