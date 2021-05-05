@@ -14,8 +14,11 @@ Mat get_homography(const vector<DMatch>& matches, const vector<KeyPoint>& obj_ke
 void draw_boundaries(Mat frame,vector<Point2f> scene_corners, const Scalar& color);
 
 int main(int argc, char *argv[]) {
-    //String path = argv[1];
-    String path = "/home/niccoloturcato/CLionProjects/HW6/Lab_6_data";
+    if (argc < 2){
+        perror("Please provide data");
+        return -1;
+    }
+    String path = argv[1];
     String obj_folder = "/objects/";
     vector<String> obj_file;
     glob(path+obj_folder+"obj*.png", obj_file);
