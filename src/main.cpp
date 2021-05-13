@@ -12,6 +12,7 @@ vector<Point2f> localize_object(const Mat& obj_image, Mat frame, const Mat& homo
 vector<DMatch> refine_match(const vector<DMatch>& matches ,const Mat& inliers_mask);
 Mat get_homography(const vector<DMatch>& matches, const vector<KeyPoint>& obj_keypoints, const vector<KeyPoint>& frame_keypoints, Mat& inliers_mask);
 void draw_boundaries(Mat frame,vector<Point2f> scene_corners, const Scalar& color);
+vector<Point2f> findCorners(const vector<Point2f>& input);
 
 int main(int argc, char *argv[]) {
     if (argc < 2){
@@ -33,7 +34,7 @@ int main(int argc, char *argv[]) {
 
     //read files
     for (int i=0; i < num_objects; i++)
-        obj_image[i] = imread(obj_file[i]);
+        obj_image[i] = imread(obj_file[i], IMREAD_GRAYSCALE);
 
     //get keypoints and descriptors
     vector<vector<KeyPoint>> obj_keypoints(num_objects);
@@ -67,7 +68,7 @@ int main(int argc, char *argv[]) {
             Mat frame_descriptor;
 
             //compute obj_keypoints for frame
-            siftPtr->detectAndCompute(frame, noArray(), frame_keypoints, frame_descriptor);
+            siftPtr->detectAndCompute(prevImg, noArray(), frame_keypoints, frame_descriptor);
 
             //matches the keypoints
             vector<vector<DMatch>> matches(num_objects);
@@ -94,7 +95,16 @@ int main(int argc, char *argv[]) {
 
             //localize the object with a green quadrilateral
             for (int i=0; i<num_objects; i++) {
-                corners[i] = localize_object(obj_image[i], frame, H[i]);
+                //corners[i] = localize_object(obj_image[i], frame, H[i]);
+
+                vector<Point2f> angles;
+                for (auto& keypoint : obj_keypoints[i])
+                    angles.push_back(keypoint.pt);
+
+                vector<Point2f> tmp= findCorners(angles);
+
+                perspectiveTransform(tmp, corners[i], H[i]);
+
                 draw_boundaries(frame, corners[i], line_color);
                 drawKeypoints(frame, good_keypoint[i], frame, obj_color[i]);
             }
@@ -161,6 +171,57 @@ vector<Point2f> localize_object(const Mat& obj_image, Mat frame, const Mat& homo
     perspectiveTransform( obj_corners, scene_corners, homography);
 
     return scene_corners;
+}
+
+vector<Point2f> findCorners(const vector<Point2f>& input){
+
+    vector<Point2f> ret;
+    if (input.size()<4)
+        return ret;
+
+    Point2f center;
+    for (const Point2f& point : input){
+        center.x += point.x;
+        center.y += point.y;
+    }
+    center.x /= static_cast<float>(input.size());
+    center.y /= static_cast<float>(input.size());
+    Point2f max_max = center;
+    Point2f max_min = center;
+    Point2f min_max = center;
+    Point2f min_min = center;
+
+    for (const Point2f& point : input){
+        if(point.x > center.x) {
+            if (point.y > center.y) {
+                if (point.x + point.y > max_max.x + max_max.y)
+                    max_max = point;
+            }
+            else {
+                if (point.x-point.y > max_min.x-max_min.y)
+                    max_min = point;
+            }
+        }
+        else{
+            if (point.y > center.y){
+                if(-point.x + point.y > -min_max.x + min_max.y)
+                    min_max=point;
+            }
+            else{
+                if(-point.x-point.y > -min_min.x-min_min.y)
+                    min_min=point;
+            }
+        }
+    }
+
+    if (min_min==center || min_max==center || max_max==center || max_min==center)
+        return ret;
+    ret.push_back(min_min);
+    ret.push_back(min_max);
+    ret.push_back(max_max);
+    ret.push_back(max_min);
+
+    return ret;
 }
 
 void draw_boundaries(Mat frame,vector<Point2f> scene_corners, const Scalar& color){
