@@ -51,7 +51,8 @@ int main(int argc, char *argv[]) {
     vector<Point2f> prevImgObjPoints[num_objects]; //vector of num_objects vectors of 2D points
     vector<Point2f> corners[num_objects];
     Mat prevImg;
-    namedWindow("Frame", WINDOW_NORMAL);
+    String video_window = "Video";
+    namedWindow(video_window, WINDOW_NORMAL);
     int cnt=0;
     while(true){
         Mat frame;
@@ -97,6 +98,9 @@ int main(int argc, char *argv[]) {
                 draw_boundaries(frame, corners[i], line_color);
                 drawKeypoints(frame, good_keypoint[i], frame, obj_color[i]);
             }
+            imshow( video_window, frame);
+            cout<<"frame 1"<<endl;
+            waitKey(0);
         }
         else{
             //Object tracking
@@ -131,17 +135,14 @@ int main(int argc, char *argv[]) {
                     if (flowStatus_objKeypoints[i][j] == 1)
                         prevImgObjPoints[i].emplace_back(currImgObjPoints[i][j]);
             }
+            imshow( video_window, frame);
+            cout<<cnt<<endl;
         }
-
-        imshow( "Frame", frame);
         cnt++;
-        cout<<cnt<<endl;
-
-        char c=(char)waitKey(1);
+        char c=(char)pollKey();
         if(c==27)
             break;
     }
-    waitKey(0);
     cap.release();
     destroyAllWindows();
     return 0;
