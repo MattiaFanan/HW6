@@ -12,7 +12,7 @@ vector<Point2f> localize_object(const Mat& obj_image, Mat frame, const Mat& homo
 vector<DMatch> refine_match(const vector<DMatch>& matches ,const Mat& inliers_mask);
 Mat get_homography(const vector<DMatch>& matches, const vector<KeyPoint>& obj_keypoints, const vector<KeyPoint>& frame_keypoints, Mat& inliers_mask);
 void draw_boundaries(Mat frame,vector<Point2f> scene_corners, const Scalar& color);
-vector<Point2f> findCorners(const vector<Point2f>& input);
+vector<Point2f> findQuadrilateral(const vector<Point2f>& input);
 
 int main(int argc, char *argv[]) {
     if (argc < 2){
@@ -75,6 +75,15 @@ int main(int argc, char *argv[]) {
             for (int i=0; i<num_objects; i++)
                 matcher->match(frame_descriptor, obj_descriptor[i], matches[i]);
 
+            /* prints outliers of img_0
+            vector<KeyPoint> tmp;
+            for (DMatch match : matches[0])
+                tmp.push_back(frame_keypoints.at(match.queryIdx));
+            drawKeypoints(frame, tmp, frame, obj_color[0]);
+            imshow( video_window, frame);
+            waitKey(0);
+            */
+
             // matches refinement
             Mat inliers_mask[num_objects];
             Mat H[num_objects];
@@ -101,9 +110,9 @@ int main(int argc, char *argv[]) {
                 for (auto& keypoint : obj_keypoints[i])
                     angles.push_back(keypoint.pt);
 
-                vector<Point2f> tmp= findCorners(angles);
+                corners[i] = findQuadrilateral(angles);
 
-                perspectiveTransform(tmp, corners[i], H[i]);
+                perspectiveTransform(corners[i], corners[i], H[i]);
 
                 draw_boundaries(frame, corners[i], line_color);
                 drawKeypoints(frame, good_keypoint[i], frame, obj_color[i]);
@@ -173,7 +182,7 @@ vector<Point2f> localize_object(const Mat& obj_image, Mat frame, const Mat& homo
     return scene_corners;
 }
 
-vector<Point2f> findCorners(const vector<Point2f>& input){
+vector<Point2f> findQuadrilateral(const vector<Point2f>& input){
 
     vector<Point2f> ret;
     if (input.size()<4)
@@ -214,6 +223,7 @@ vector<Point2f> findCorners(const vector<Point2f>& input){
         }
     }
 
+    //check validity of the quadrilateral
     if (min_min==center || min_max==center || max_max==center || max_min==center)
         return ret;
     ret.push_back(min_min);
