@@ -29,7 +29,7 @@ int main(int argc, char *argv[]) {
     Mat obj_image[num_objects];
 
     Ptr<SIFT> siftPtr = SIFT::create();
-    BFMatcher matcher(cv::NORM_L2,true);
+    Ptr<BFMatcher> matcher = BFMatcher::create(cv::NORM_L2,true);
 
     //read files
     for (int i=0; i < num_objects; i++)
@@ -71,7 +71,7 @@ int main(int argc, char *argv[]) {
             //matches the keypoints
             vector<vector<DMatch>> matches(num_objects);
             for (int i=0; i<num_objects; i++)
-                matcher.match(frame_descriptor, obj_descriptor[i], matches[i]);
+                matcher->match(frame_descriptor, obj_descriptor[i], matches[i]);
 
             // matches refinement
             Mat inliers_mask[num_objects];
