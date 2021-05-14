@@ -13,6 +13,7 @@ vector<DMatch> refine_match(const vector<DMatch>& matches ,const Mat& inliers_ma
 Mat get_homography(const vector<DMatch>& matches, const vector<KeyPoint>& obj_keypoints, const vector<KeyPoint>& frame_keypoints, Mat& inliers_mask);
 void draw_boundaries(Mat frame,vector<Point2f> scene_corners, const Scalar& color);
 vector<Point2f> findQuadrilateral(const vector<Point2f>& input);
+vector<Point2f> findQuadrilateral(const Mat& input_image);
 
 int main(int argc, char *argv[]) {
     if (argc < 2){
@@ -35,7 +36,6 @@ int main(int argc, char *argv[]) {
     //read files
     for (int i=0; i < num_objects; i++) {
         obj_image[i] = imread(obj_file[i], IMREAD_GRAYSCALE);
-        equalizeHist(obj_image[i],obj_image[i]);
     }
 
     //get keypoints and descriptors
@@ -105,16 +105,8 @@ int main(int argc, char *argv[]) {
 
             //localize the object with a green quadrilateral
             for (int i=0; i<num_objects; i++) {
-                //corners[i] = localize_object(obj_image[i], frame, H[i]);
-
-                vector<Point2f> angles;
-                for (auto& keypoint : obj_keypoints[i])
-                    angles.push_back(keypoint.pt);
-
-                corners[i] = findQuadrilateral(angles);
-
+                corners[i] = findQuadrilateral(obj_image[i]);
                 perspectiveTransform(corners[i], corners[i], H[i]);
-
                 draw_boundaries(frame, corners[i], line_color);
                 drawKeypoints(frame, good_keypoint[i], frame, obj_color[i]);
             }
@@ -166,6 +158,16 @@ int main(int argc, char *argv[]) {
     cap.release();
     destroyAllWindows();
     return 0;
+}
+
+vector<Point2f> findQuadrilateral(const Mat& input_img){
+    namedWindow("try",WINDOW_GUI_NORMAL);
+    Mat blured;
+    GaussianBlur(input_img,blured,Size(5,5),1.5);
+    Canny(blured,blured,30,70);
+    vector<Point2f> edges;
+    findNonZero(blured,edges);
+    return findQuadrilateral(edges);
 }
 
 vector<Point2f> localize_object(const Mat& obj_image, Mat frame, const Mat& homography){
