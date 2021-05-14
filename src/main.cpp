@@ -32,9 +32,12 @@ int main(int argc, char *argv[]) {
     Ptr<SIFT> siftPtr = SIFT::create();
     Ptr<BFMatcher> matcher = BFMatcher::create(cv::NORM_L2,true);
 
+    namedWindow("lap",WINDOW_NORMAL);
     //read files
-    for (int i=0; i < num_objects; i++)
+    for (int i=0; i < num_objects; i++) {
         obj_image[i] = imread(obj_file[i], IMREAD_GRAYSCALE);
+        equalizeHist(obj_image[i],obj_image[i]);
+    }
 
     //get keypoints and descriptors
     vector<vector<KeyPoint>> obj_keypoints(num_objects);
@@ -75,14 +78,13 @@ int main(int argc, char *argv[]) {
             for (int i=0; i<num_objects; i++)
                 matcher->match(frame_descriptor, obj_descriptor[i], matches[i]);
 
-            /* prints outliers of img_0
+            /*//prints outliers of img_0
             vector<KeyPoint> tmp;
             for (DMatch match : matches[0])
                 tmp.push_back(frame_keypoints.at(match.queryIdx));
             drawKeypoints(frame, tmp, frame, obj_color[0]);
             imshow( video_window, frame);
-            waitKey(0);
-            */
+            waitKey(0);*/
 
             // matches refinement
             Mat inliers_mask[num_objects];
