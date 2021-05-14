@@ -15,11 +15,14 @@ void draw_boundaries(Mat frame,vector<Point2f> scene_corners, const Scalar& colo
 vector<Point2f> findQuadrilateral(const vector<Point2f>& input);
 
 int main(int argc, char *argv[]) {
+    /*
     if (argc < 2){
         perror("Please provide data");
         return -1;
     }
-    String path = argv[1];
+     */
+    //String path = argv[1];
+    String path = "/home/niccoloturcato/CLionProjects/HW6/Lab_6_data";
     String obj_folder = "/objects/";
     vector<String> obj_file;
     glob(path+obj_folder+"obj*.png", obj_file);
@@ -36,12 +39,19 @@ int main(int argc, char *argv[]) {
     for (int i=0; i < num_objects; i++)
         obj_image[i] = imread(obj_file[i], IMREAD_GRAYSCALE);
 
+    //Preprocessing for feature enhancement
+    for (int i=0; i < num_objects; i++) {
+        Mat additive;
+        Sobel(obj_image[i], additive, CV_8U, 1, 1, 3);
+        obj_image[i]+=additive;
+    }
+
+
     //get keypoints and descriptors
     vector<vector<KeyPoint>> obj_keypoints(num_objects);
     vector<Mat> obj_descriptor(num_objects);
     for (int i=0; i<num_objects; i++)
         siftPtr->detectAndCompute(obj_image[i], noArray(), obj_keypoints[i], obj_descriptor[i]);
-
 
     VideoCapture cap(path+"/video.mov");
     if(!cap.isOpened()){
@@ -75,7 +85,9 @@ int main(int argc, char *argv[]) {
             for (int i=0; i<num_objects; i++)
                 matcher->match(frame_descriptor, obj_descriptor[i], matches[i]);
 
-            /* prints outliers of img_0
+
+            //prints outliers of img_0
+            /*
             vector<KeyPoint> tmp;
             for (DMatch match : matches[0])
                 tmp.push_back(frame_keypoints.at(match.queryIdx));
