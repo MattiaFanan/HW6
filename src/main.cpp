@@ -31,8 +31,7 @@ int main(int argc, char *argv[]) {
 
     Ptr<SIFT> siftPtr = SIFT::create();
     Ptr<BFMatcher> matcher = BFMatcher::create(cv::NORM_L2,true);
-
-    namedWindow("lap",WINDOW_NORMAL);
+    
     //read files
     for (int i=0; i < num_objects; i++) {
         obj_image[i] = imread(obj_file[i], IMREAD_GRAYSCALE);
