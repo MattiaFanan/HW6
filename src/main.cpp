@@ -77,13 +77,15 @@ int main(int argc, char *argv[]) {
             for (int i=0; i<num_objects; i++)
                 matcher->match(frame_descriptor, obj_descriptor[i], matches[i]);
 
-            /*//prints outliers of img_0
+            //prints outliers of img_0
+            namedWindow("outliers",WINDOW_NORMAL);
+            Mat out_img;
             vector<KeyPoint> tmp;
             for (DMatch match : matches[0])
                 tmp.push_back(frame_keypoints.at(match.queryIdx));
-            drawKeypoints(frame, tmp, frame, obj_color[0]);
-            imshow( video_window, frame);
-            waitKey(0);*/
+            drawKeypoints(frame, tmp, out_img, obj_color[0]);
+            imshow( video_window, out_img);
+            waitKey(0);
 
             // matches refinement
             Mat inliers_mask[num_objects];
@@ -161,7 +163,6 @@ int main(int argc, char *argv[]) {
 }
 
 vector<Point2f> findQuadrilateral(const Mat& input_img){
-    namedWindow("try",WINDOW_GUI_NORMAL);
     Mat blured;
     GaussianBlur(input_img,blured,Size(5,5),1.5);
     Canny(blured,blured,30,70);
