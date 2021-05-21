@@ -8,7 +8,7 @@
 
 using namespace cv;
 using namespace std;
-vector<Point2f> localize_object(const Mat& obj_image, Mat frame, const Mat& homography);
+
 vector<DMatch> refine_match(const vector<DMatch>& matches ,const Mat& inliers_mask);
 Mat get_homography(const vector<DMatch>& matches, const vector<KeyPoint>& obj_keypoints, const vector<KeyPoint>& frame_keypoints, Mat& inliers_mask);
 void draw_boundaries(Mat frame,vector<Point2f> scene_corners, const Scalar& color);
@@ -107,7 +107,6 @@ int main(int argc, char *argv[]) {
 
             //localize the object with a green quadrilateral
             for (int i=0; i<num_objects; i++) {
-                //corners[i] = localize_object(obj_image[i], frame, H[i]);
 
                 vector<Point2f> angles;
                 for (auto& keypoint : obj_keypoints[i])
@@ -168,21 +167,6 @@ int main(int argc, char *argv[]) {
     cap.release();
     destroyAllWindows();
     return 0;
-}
-
-vector<Point2f> localize_object(const Mat& obj_image, Mat frame, const Mat& homography){
-    //build object corners
-    std::vector<Point2f> obj_corners(4);
-    obj_corners[0] = Point2f(0, 0);
-    obj_corners[1] = Point2f( (float)obj_image.cols, 0 );
-    obj_corners[2] = Point2f( (float)obj_image.cols, (float)obj_image.rows );
-    obj_corners[3] = Point2f( 0, (float)obj_image.rows );
-
-    //-- re-project the corners with the homography
-    std::vector<Point2f> scene_corners(4);
-    perspectiveTransform( obj_corners, scene_corners, homography);
-
-    return scene_corners;
 }
 
 vector<Point2f> findQuadrilateral(const vector<Point2f>& input){
